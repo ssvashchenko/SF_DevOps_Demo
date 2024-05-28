@@ -1,0 +1,1 @@
+EXECUTE IMMEDIATE FROM './database/demo_db/schemas/demo_schema/tables/my_inventory.sql'
