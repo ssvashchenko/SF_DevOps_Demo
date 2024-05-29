@@ -10,7 +10,7 @@ USE SCHEMA DEMO_DB.DEMO_SHEMA;
 --export SNOWFLAKE_CONNECTIONS_DEMO_PASSWORD=""
 
 --Run a simple Hello world example
-snow sql -q " SELECT 'Hello World!'"
+snowsql -q " SELECT 'Hello World!'"
 
 --- -----------------------------------------------------------------------
  --Step #2 : Run our DCM process from snowCLI
@@ -19,8 +19,8 @@ snow sql -q " SELECT 'Hello World!'"
  --Review the deploy_object.sql script
  DESCRIBE TABLE MY_INVENTORY;
 
- snow sql -q "ALTER GIT REPOSITORY GIT_REPO FETCH"
- snow sql -q "EXECUTE IMMEDIATE FROM @GIT_REPO/branches/main/snowflake_objects/deploy_objects.sql
+ snowsql -q "ALTER GIT REPOSITORY GIT_REPO FETCH"
+ snowsql -q "EXECUTE IMMEDIATE FROM @GIT_REPO/branches/main/snowflake_objects/deploy_objects.sql
 
  DESCRIBE TABLE MY_INVENTORY;
 

@@ -3,5 +3,6 @@ AS
 SELECT 
     SKU, 
     PRICE,
-    NOTE
+    NOTE,
+    'SOURCE1' AS SOURCE
 FROM MY_INVENTORY;
