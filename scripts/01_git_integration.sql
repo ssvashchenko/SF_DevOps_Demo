@@ -1,45 +1,47 @@
 --- -----------------------------------------------------------------------
  --Step #1 : Create a Secret to Store the GitHub PAT
 -- ------------------------------------------------------------------------
-CREATE OR REPLACE SECRET FAOUZI_GITHUB_SECRET
+USE SCHEMA DEMO_DB.DEMO_SCHEMA;
+
+CREATE OR REPLACE SECRET SSV_SECRET
 TYPE = PASSWORD
-USERNAME = 'github-user-name'
-PASSWORD = 'github-access-token';
+USERNAME = 'ssvashchenko'
+PASSWORD = 'SeniorSergio1970';
 
-show secrte;
+show secrets;
 
-DESCRIBE SECRET FAOUZI_GITHUB_SECRET;
+DESCRIBE SECRET SSV_SECRET;
 
 --- -----------------------------------------------------------------------
  --Step #2 : Create a Git API Integration
 -- ------------------------------------------------------------------------
-CREATE OR REPLACE API INTEGRATION FAOUZI_GITHUB_API_INTEGRATION
+CREATE OR REPLACE API INTEGRATION GIT_API_INTEGRATION
 API_PROVIDER = GIT_HTTPS_API
-API_ALLOWED_PREFIXES = ('https://github.com/ALYFAOUZI')
-ALLOWED_AUTHENTICATION_SECRETS = (FAOUZI_GITHUB_SECRET)
+API_ALLOWED_PREFIXES = ('https://github.com/ssvashchenko')
+ALLOWED_AUTHENTICATION_SECRETS = (SSV_SECRET)
 ENABLED = TRUE;
 
 SHOW INTEGRATIONS;
 SHOW API INTEGRATIONS;
 
-DESCRIBE API INTEGRATION FAOUZI_GITHUB_API_INTEGRATION;
+DESCRIBE API INTEGRATION GIT_API_INTEGRATION;
 
 --- -----------------------------------------------------------------------
  --Step #3 : Create a Git Repository
 -- ------------------------------------------------------------------------
 
-CREATE OR REPLACE GIT REPOSITORY DEMO_REPO
-API_INTEGRATION = FAOUZI_GITHUB_API_INTEGRATION
-GIT_CREDENTIALS = FAOUZI_GITHUB_SECRET
-origin ='https://github.com/ALYFAOUZI/build-dcm-demo.git';
+CREATE OR REPLACE GIT REPOSITORY GIT_REPO
+API_INTEGRATION = GIT_API_INTEGRATION
+GIT_CREDENTIALS = SSV_SECRET
+origin ='https://github.com/ssvashchenko/SF_DevOps_Demo.git';
 
 SHOW GIT REPOSITORIES;
 
-DESCRIBE GIT REPOSITORY DEMO_REPO;
+DESCRIBE GIT REPOSITORY GIT_REPO;
 
-GRANT READ ON GIT REPOSITORY DEMO_REPO TO ROLE DEMO_ROLE;
+GRANT READ ON GIT REPOSITORY GIT_REPO TO ROLE SVASHCHENKO__U_ROLE;
 
-USE ROLE DEMO_ROLE;
+USE ROLE SVASHCHENKO__U_ROLE;
 
 
 --- -----------------------------------------------------------------------
@@ -49,17 +51,17 @@ USE ROLE DEMO_ROLE;
 --For Example a branch Name, a tag name or a valid commit hash
 -- Commit hashes are between 6 and 40 characters long.
 
-LIST @DEMO_REPO/brances/main;
-LIST @DEMO_REPO/brances/tag_name;
-LIST @DEMO_REPO/brances/commit_hash;
+LIST @GIT_REPO/branches/main;
+LIST @GIT_REPO/branches/tag_name;
+LIST @GIT_REPO/branches/commit_hash;
 
 
 --Show commands
-SHOW GIT BRANCHES IN DEMO_REPO;
-SHOW GIT TAGS IN DEMO_REPO;
+SHOW GIT BRANCHES IN GIT_REPO;
+SHOW GIT TAGS IN GIT_REPO;
 
 -- Fetch new changes
-ALTER GIT REPOSITORY DEMO_REPO FETCH;
+ALTER GIT REPOSITORY GIT_REPO FETCH;
 
 
 
