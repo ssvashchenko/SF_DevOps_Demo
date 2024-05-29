@@ -26,14 +26,15 @@ DESCRIBE TABLE MY_INVENTORY;
  --commit changes
 
 -- ------------------------------------------------------------------------
-ALER GIT REPOSITORY GIT_REPO FETCH;
+ALTER GIT REPOSITORY GIT_REPO FETCH;
 
 --APPLY THE NEW CHANGES declaratively
-EXECUTE IMMEDIATE FROM @DEMO_REPO/branches/main/snowflake_objects/databases/demo_db/schemas/tables/my_inventory.sql;
-EXECUTE IMMEDIATE FROM @DEMO_REPO/branches/main/snowflake_objects/databases/demo_db/schemas/tables/v_my_inventory.sql;
+EXECUTE IMMEDIATE FROM @GIT_REPO/branches/main/snowflake_objects/databases/demo_db/schemas/demo_schema/tables/my_inventory.sql;
+EXECUTE IMMEDIATE FROM @GIT_REPO/branches/main/snowflake_objects/databases/demo_db/schemas/demo_schema/views/v_my_inventory.sql;
 
 DESCRIBE TABLE MY_INVENTORY;
-SELECT * FROM MY_INVENTORYl;
 
+SELECT * FROM MY_INVENTORYl;
+SELECT * FROM V_MY_INVENTORYl;
 
 
