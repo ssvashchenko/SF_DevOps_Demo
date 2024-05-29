@@ -1,6 +1,6 @@
-USE ROLE DEMO_ROLE;
-USE WAREHOUSE DEMO_WH;
-USE SCHEMA DEMO_DB.DEMO_SCHEMA;
+USE ROLE SVASHCHENKO__U_ROLE;
+USE WAREHOUSE DEV_ETL_WH;
+USE SCHEMA DEMO_DB.DEMO_SHEMA;
 
 --- -----------------------------------------------------------------------
  --Step #1 : Run first SQL Statement from snowCLI
@@ -10,7 +10,7 @@ USE SCHEMA DEMO_DB.DEMO_SCHEMA;
 --export SNOWFLAKE_CONNECTIONS_DEMO_PASSWORD=""
 
 --Run a simple Hello world example
---snow sql -q " SELECT 'Hello World!'"
+snow sql -q " SELECT 'Hello World!'"
 
 --- -----------------------------------------------------------------------
  --Step #2 : Run our DCM process from snowCLI
@@ -19,8 +19,8 @@ USE SCHEMA DEMO_DB.DEMO_SCHEMA;
  --Review the deploy_object.sql script
  DESCRIBE TABLE MY_INVENTORY;
 
- --snow sql -q "ALTER GIT REPOSITORY DEMO_REPO FETCH"
- --snow sql -q "EXECUTE IMMEDIATE FROM @DEMO_REPO/branches/main/snowflake_objects/deploy_objects.sql
+ snow sql -q "ALTER GIT REPOSITORY GIT_REPO FETCH"
+ snow sql -q "EXECUTE IMMEDIATE FROM @GIT_REPO/branches/main/snowflake_objects/deploy_objects.sql
 
  DESCRIBE TABLE MY_INVENTORY;
 
