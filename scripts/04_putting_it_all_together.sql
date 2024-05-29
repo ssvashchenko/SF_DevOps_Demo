@@ -1,7 +1,7 @@
-USE  ROLE DEMO_ROLE;
-USE WAREHOUSE DEMO_WH;
-USE SCHEMA DEMO_BB.DEMO_SH;
 
+USE ROLE SVASHCHENKO__U_ROLE;
+USE WAREHOUSE DEV_ETL_WH;
+USE SCHEMA DEMO_DB.DEMO_SHEMA;
 --- -----------------------------------------------------------------------
  --Step #1 : Review the "snowflake_objects" folder
 -- ------------------------------------------------------------------------
@@ -10,11 +10,12 @@ USE SCHEMA DEMO_BB.DEMO_SH;
 --- -----------------------------------------------------------------------
  --Step #2 : Run CREATE OR ALTER with EXECUTE IMMEDIATE FROM <file>
 -- ------------------------------------------------------------------------
-LIST @DEMO_REPO/branches/main/snowflake_objects;
+LIST @GIT_REPO/branches/main/snowflake_objects;
 
-DECRIBE TABLE MY_INVENTORY;
+DESCRIBE TABLE MY_INVENTORY;
+
 --This should make no changes to the table since the destination is the same as before
-EXECUTE IMMEDIATE FROM @DEMO_REPO/branches/main/snowflake_objects/demo_db/schemas/demo_schema/tables/my_inventory.sql;
+EXECUTE IMMEDIATE FROM @GIT_REPO/branches/main/snowflake_objects/databases/demo_db/schemas/demo_schema/tables/my_inventory.sql;
 
 DESCRIBE TABLE MY_INVENTORY;
 
