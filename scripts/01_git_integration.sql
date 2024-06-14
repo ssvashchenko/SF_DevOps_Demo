@@ -6,7 +6,7 @@ USE SCHEMA DEMO_DB.DEMO_SCHEMA;
 CREATE OR REPLACE SECRET SSV_SECRET
 TYPE = PASSWORD
 USERNAME = 'ssvashchenko'
-PASSWORD = 'SeniorSergio1970';
+PASSWORD = '****************';
 
 show secrets;
 

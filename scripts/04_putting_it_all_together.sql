@@ -21,8 +21,8 @@ DESCRIBE TABLE MY_INVENTORY;
 
 --- -----------------------------------------------------------------------
  --Step #3 : Make a change to the table definition and commit it to your repo
- --exemple databases-demo_db-demo_schemas-tables my_inventory.sql
- -- add column Description varchar 
+ --example databases-demo_db-demo_schemas-tables my_inventory.sql
+ -- add any column (Description varchar)
  --commit changes
 
 -- ------------------------------------------------------------------------

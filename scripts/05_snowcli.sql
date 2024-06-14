@@ -19,8 +19,8 @@ snowsql -q " SELECT 'Hello World!'"
  --Review the deploy_object.sql script
  DESCRIBE TABLE MY_INVENTORY;
 
- snowsql -q "ALTER GIT REPOSITORY GIT_REPO FETCH"
- snowsql -q "EXECUTE IMMEDIATE FROM @GIT_REPO/branches/main/snowflake_objects/deploy_objects.sql
+ snowsql -q "ALTER GIT REPOSITORY GIT_REPO FETCH";
+ snowsql -q "EXECUTE IMMEDIATE FROM @GIT_REPO/branches/main/snowflake_objects/deploy_objects.sql;
 
  DESCRIBE TABLE MY_INVENTORY;
 
