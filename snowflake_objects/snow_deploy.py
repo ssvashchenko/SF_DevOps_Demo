@@ -4,7 +4,6 @@ import json
 from sys import exit
 from retry import retry
 import argparse
-import functools
 import itertools
 import pathlib
 from dataclasses import dataclass, astuple
@@ -13,7 +12,6 @@ from rich import print, pretty
 from rich.table import Column, Table
 from rich.progress import track
 
-import os
 from datetime import datetime, timedelta
 import warnings
 
@@ -77,12 +75,12 @@ def parse_args():
 
 if __name__ == "__main__":
 
-    # TODO parse args for database (default to transform), schema (fail without default), and file or sproc name (default to all)
+    # parse args 
     args = parse_args()
     print(args)
     
     # grab all .sql files in schema dir
-    filenames = sorted(list(itertools.chain(*[list(pathlib.Path(f"{args.schema[0]}/").glob("**/*.sql"))])))
+    filenames = sorted(list(itertools.chain(*[list(pathlib.Path(f"{args.database[0]}/{args.schema[0]}/").glob("**/*.sql"))])))
     #print(filenames)
 
     today = datetime.today()

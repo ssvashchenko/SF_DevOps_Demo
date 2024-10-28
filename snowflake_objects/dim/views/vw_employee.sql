@@ -19,5 +19,5 @@ select
 	create_date,
 	created_by,
 	update_date,
-	updated_by
+	'svashchenko' as updated_by
 from dim.d_employee;

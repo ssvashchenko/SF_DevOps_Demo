@@ -1,142 +1,141 @@
-# pull existing sprocs into files (handle already deployed sprocs)
+# pull existing objects into files
+import snowflake.connector
+import json
 
-
-import pandas as pd
-import sqlalchemy as sqa
-import urllib
-
-# import snowflake.connector
-import functools
-import multiprocessing
-
-from signal import signal, SIGINT
-from sys import exit
 import os
 from retry import retry
 import argparse
-import functools
-import itertools
-import pathlib
 
 from rich import print, pretty
-from rich.table import Table
-from rich.progress import BarColumn, Progress, TaskID, TextColumn, TimeRemainingColumn, TimeElapsedColumn
-from rich.progress import track
-from rich.console import Console
+from rich.progress import Progress
 from rich.tree import Tree
-
-
-import time
 import warnings
 
 warnings.simplefilter(action="ignore", category=UserWarning)
-
 pretty.install()
 
-
 ### Config
-PARENT_DIR = "Transform"
+PARENT_DIR = "DEMO_DB"
 
-
-print("Ideal Schema Focused Project Structure")
+print("Schema focused structure")
 tree = Tree(PARENT_DIR)
-etl_tree = tree.add("ETL")
-ftree = etl_tree.add("functions")
-
-ftree.add("FNETLKEY")
-ftree.add("FNGETSDLC")
-
-ptree = etl_tree.add("procedures")
-ptree.add("SPCLEANINIT")
-ptree.add("SPLOADINIT")
-
-dmr_tree = tree.add("DMR")
-dmr_tree.add("functions").add("...")
-dmr_tree.add("procedures").add("...")
-
-print(tree, "\n\n")
-
+print(tree)
 
 @retry(tries=3, delay=1)
-def get_snowflake(db, sma="public"):
-    global snowflake_engine
-    snowflake_engine = sqa.create_engine(
-        "snowflake://{user}:{password}@{account}/{database_name}/{schema_name}?warehouse={warehouse_name}&role={role_name}".format(
-            user="TKIND",
-            password="",
-            account="mk50743.west-us-2.azure",
-            database_name=db,
-            schema_name=sma,
-            warehouse_name="SANDBOX_XSMALL",
-            role_name="udp_engineer",
-        )
-    )
-    return snowflake_engine.connect().execution_options(autocommit=True)
+def get_snowflake(db):
+    with open("cred.json","r") as f:
+        cred = json.load(f)
 
+    conn = snowflake.connector.connect(
+        user=cred["userid"],
+        password=cred["password"],
+        account=cred["account"],
+        database_name=db,
+        schema_name="public",
+        warehouse_name="dev_etl_wh",
+        role_name="DEVELOPER__B_ROLE"
+    )
+ 
+    return conn.cursor()
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Write local files to Snowflake")
+    parser.add_argument(
+        "-d",
+        "--database",
+        nargs=1,
+        required=True,
+        help="Choose individual database",
+    )
+    
+    return parser.parse_args()
 
 def safe_open(path, t):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     return open(path, t)
 
-
 with Progress() as progress:
-    cnx = get_snowflake("transform_dev")
+    args = parse_args()
+    print(args)
 
-    progress.console.log("Fetching procedures")
-    res = cnx.execute("select * from transform_dev.information_schema.procedures")
-    res = [r._asdict() for r in res.fetchall()]
-    progress.console.log("Procedures fetched")
-    task = progress.add_task("Procedures", total=len(res),)
-    for d in res:
-        # if len(d["procedure_definition"]) < 20:
-        if d["procedure_definition"] is None:
-            progress.console.log(d)
-        with safe_open(f"{PARENT_DIR}/{d['procedure_schema']}/procedures/{d['procedure_name']}.sql", "w") as sproc:
-            sproc.write(
-                (
-                    f"CREATE OR REPLACE PROCEDURE {d['procedure_schema']}.{d['procedure_name']} {d['argument_signature']}\n"
-                    f"RETURNS {d['data_type']}\n"
-                    "LANGUAGE JAVASCRIPT\n"
-                    "EXECUTE AS CALLER\n"
-                    "AS\n"
-                    "$$\n"
-                    f"{d['procedure_definition']}$$;"
-                )
-            )
+    cnx = get_snowflake(args.database[0])
+    cnx.execute("use database " + args.database[0])
+    cnx.execute("use warehouse dev_etl_wh")
+
+    progress.console.log("Fetching tables...")
+    cnx.execute("select table_schema, table_name from information_schema.tables where table_type = 'BASE TABLE'")
+    rows = cnx.fetchall()
+
+    #progress.console.log("Tables fetched")
+    task = progress.add_task("Tables", total=len(rows))
+    
+    for r in rows:
+        get_ddl = "select get_ddl('TABLE', '" + r[0] + '.' + r[1] + "', true)"
+        cnx.execute(get_ddl)
+        tbldef = str(cnx.fetchall()[0][0])
+        tbldef = tbldef.replace("\\t", "").replace("\\n", chr(10))
+        #print(tbldef)
+        
+        if tbldef is None:
+            progress.console.log(tbldef)
+
+        with safe_open(f"{PARENT_DIR}/{r[0]}/tables/{r[1]}.sql".lower(), "w") as table:
+            table.write(f"{tbldef.lower()}")
         progress.advance(task)
 
-    progress.console.log("Fetching sequences")
-    res = cnx.execute("select * from transform_dev.information_schema.sequences")
-    res = [r._asdict() for r in res.fetchall()]
-    progress.console.log("Sequences fetched")
-    task = progress.add_task("Sequences", total=len(res),)
-    for d in res:
-        with safe_open(f"{PARENT_DIR}/{d['sequence_schema']}/sequences/{d['sequence_name']}.sql", "w") as seq:
-            seq.write(
-                (
-                    f"CREATE SEQUENCE IF NOT EXISTS {d['sequence_schema']}.{d['sequence_name']}\n"
-                    "WITH\n"
-                    f"START WITH {d['start_value']}\n"
-                    f"INCREMENT BY {d['INCREMENT']}\n"
-                    f"COMMENT = '{d['comment']}'\n;"
-                )
-            )
+    progress.console.log("Fetching views...")
+    cnx.execute("select table_schema, table_name, view_definition from information_schema.views where table_schema !='INFORMATION_SCHEMA'")
+    rows = cnx.fetchall()
+
+    #progress.console.log("Views fetched")
+    task = progress.add_task("Views", total=len(rows))
+    
+    for r in rows:
+        if r[2] is None:
+            progress.console.log(r)
+
+        with safe_open(f"{PARENT_DIR}/{r[0]}/views/{r[1]}.sql".lower(), "w") as view:
+            view.write(f"{r[2]}".lower())
+                
         progress.advance(task)
 
-    progress.console.log("Fetching functions")
-    res = cnx.execute("select * from transform_dev.information_schema.functions")
-    res = [r._asdict() for r in res.fetchall()]
-    progress.console.log("Functions fetched")
-    task = progress.add_task("Functions", total=len(res),)
-    for d in res:
-        with safe_open(f"{PARENT_DIR}/{d['function_schema']}/functions/{d['function_name']}.sql", "w") as fun:
+    progress.console.log("Fetching procs...")
+    cnx.execute("select procedure_schema, procedure_name, procedure_definition, argument_signature, data_type, procedure_language from information_schema.procedures")
+    rows = cnx.fetchall()
+   
+    #progress.console.log("Procs fetched")
+    task = progress.add_task("Procedures", total=len(rows))
+    
+    for r in rows:
+        if r[2] is None:
+            progress.console.log(r)
+
+        with safe_open(f"{PARENT_DIR}/{r[0]}/procedures/{r[1]}.sql".lower(), "w") as proc:
+            proc.write(
+                f"create or replace procedure {r[0]}.{r[1]} {r[3]}\n"
+                f"returns {r[4]}\n"
+                f"language {r[5]}\n"
+                f"as\n"
+                f"{r[2]};".lower()
+            )
+
+        progress.advance(task)
+
+    progress.console.log("Fetching functions...")
+    cnx.execute("select function_schema, function_name, function_definition, argument_signature, data_type, function_language from information_schema.functions")
+    rows = cnx.fetchall()
+    
+    #progress.console.log("Functions fetched")
+    task = progress.add_task("Functions", total=len(rows))
+
+    for r in rows:
+        with safe_open(f"{PARENT_DIR}/{r[0]}/functions/{r[1]}.sql".lower(), "w") as fun:
             fun.write(
-                (
-                    f"CREATE OR REPLACE FUNCTION {d['function_schema']}.{d['function_name']} {d['argument_signature']}\n"
-                    f"RETURNS {d['data_type']}\n"
-                    f"COMMENT = '{d['comment']}'\n"
-                    f"AS\n$$\n{d['function_definition']}\n$$\n;"
-                )
+                f"create or replace function {r[0]}.{r[1]} {r[3]}\n"
+                f"returns {r[4]}\n"
+                f"language {r[5]}\n"
+                f"as\n"
+                f"{r[2]};".lower()
             )
         progress.advance(task)
 
