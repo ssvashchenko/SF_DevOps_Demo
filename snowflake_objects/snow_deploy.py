@@ -44,7 +44,7 @@ def get_snowflake(db):
     return conn
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Write local files to Snowflake")
+    parser = argparse.ArgumentParser(description="Deploy local files to Snowflake")
     parser.add_argument(
         "-d",
         "--database",
